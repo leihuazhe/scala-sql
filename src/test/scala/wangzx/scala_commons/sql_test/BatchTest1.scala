@@ -23,7 +23,7 @@ object BatchTest1 {
 
     batch2.close()
 
-    conn.rows[User]("select * from users").foreach(println)
+    conn.rows[User](sql"select * from users").foreach(println)
 
   }
 

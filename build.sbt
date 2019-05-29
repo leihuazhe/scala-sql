@@ -2,11 +2,12 @@ organization := "com.github.wangzaixiang"
 
 name := "scala-sql"
 
-version := "2.0.7"
+version := "2.0.8-SNAPSHOT"
 
-scalaVersion := "2.12.4"
+//scalaVersion := "2.12.4"
+scalaVersion := "2.11.7"
 
-crossScalaVersions := Seq("2.11.11", "2.12.4")
+//crossScalaVersions := Seq("2.11.11", "2.12.4")
 
 libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-api" % "1.7.9",
@@ -25,10 +26,10 @@ publishTo := {
   if (version.value.endsWith("SNAPSHOT"))
     Some("snapshots" at nexus + "content/repositories/snapshots")
   else
-    Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+    Some("releases" at nexus + "service/local/staging/deploy/maven2")
 }
 
-publishConfiguration  := publishConfiguration.value.withOverwrite(true)
+publishConfiguration := publishConfiguration.value.withOverwrite(true)
 
 
 // publishSignedConfiguration := publishConfiguration.value.withOverwrite(true)

@@ -321,7 +321,7 @@ package object sql {
   abstract class CaseClassResultSetMapper[T] extends ResultSetMapper[T] {
 
     // cammel case mapping support such as userId -> user_id, postURL -> post_url
-    case class Field[T: JdbcValueAccessor](name: String, default: Option[T] = None) {
+    case class Field[C: JdbcValueAccessor](name: String, default: Option[C] = None) {
       // val method: Option[java.lang.reflect.Method] = defaultName.map ( companion.getClass.getMethod(_) )
       val underscoreName: Option[String] = {
         val sb = new StringBuilder
@@ -345,12 +345,12 @@ package object sql {
         else None
       }
 
-      def apply(rs: ResultSetEx): T = {
+      def apply(rs: ResultSetEx): C = {
         if ( rs hasColumn name ){
-          rs.get[T](name)
+          rs.get[C](name)
         }
         else if(underscoreName.nonEmpty && rs.hasColumn(underscoreName.get)) {
-          rs.get[T](underscoreName.get)
+          rs.get[C](underscoreName.get)
         }
         else {
           default match {

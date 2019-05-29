@@ -25,7 +25,7 @@ object BuilderTest {
     id: String,
     name: String,
     opId: List[String],
-    address: PersonAddress,
+    address: PersonAddress
     //dady: Person
   )
   case class PersonAddress
