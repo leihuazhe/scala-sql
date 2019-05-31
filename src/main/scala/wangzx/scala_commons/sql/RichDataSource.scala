@@ -3,9 +3,6 @@ package wangzx.scala_commons.sql
 import java.sql._
 
 import javax.sql.DataSource
-import wangzx.scala_commons.sql.ORM.Insert
-//import wangzx.scala_commons.sql.ORM.Insert._
-import scala.reflect.ClassTag
 
 class RichDataSource(val datasource: DataSource) {
 
@@ -52,8 +49,8 @@ class RichDataSource(val datasource: DataSource) {
 
     def queryInt(sql: SQLWithArgs): Int = withConnection(_.queryInt(sql))
 
-    def save[T: Insert](dto: T): Int = withConnection(_.save(dto))
+    def save[T: OrmInsert](dto: T): Int = withConnection(_.save(dto))
 
-    def saveWithSchema[T: Insert](schema: String)(dto: T): Int = withConnection(_.saveWithSchema(schema, dto))
+    def saveWithSchema[T: OrmInsert](schema: String)(dto: T): Int = withConnection(_.saveWithSchema(schema, dto))
 
 }

@@ -2,7 +2,6 @@ package wangzx.scala_commons.sql
 
 import java.sql._
 
-import wangzx.scala_commons.sql.ORM.Insert
 import scala.language.experimental.macros
 import scala.collection.mutable.ListBuffer
 
@@ -305,8 +304,8 @@ class RichConnection(val conn: Connection) {
         } else throw new IllegalArgumentException("query return no rows")
     }
 
-    def save[T: Insert](dto: T): Int = {
-        val (sql, sqlWithArgs) = implicitly[Insert[T]].from(dto, None)
+    def save[T: OrmInsert](dto: T): Int = {
+        val (sql, sqlWithArgs) = implicitly[OrmInsert[T]].from(dto, None)
         val prepared = conn.prepareStatement(sql, Statement.NO_GENERATED_KEYS)
 
         try {
@@ -325,8 +324,8 @@ class RichConnection(val conn: Connection) {
         }
     }
 
-    def saveWithSchema[T: Insert](schemaName: String, dto: T): Int = {
-        val (sql, sqlWithArgs) = implicitly[Insert[T]].from(dto, Some(schemaName))
+    def saveWithSchema[T: OrmInsert](schemaName: String, dto: T): Int = {
+        val (sql, sqlWithArgs) = implicitly[OrmInsert[T]].from(dto, Some(schemaName))
         val prepared = conn.prepareStatement(sql, Statement.NO_GENERATED_KEYS)
 
         try {
