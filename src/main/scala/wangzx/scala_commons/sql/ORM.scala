@@ -5,68 +5,83 @@ import scala.reflect.macros.whitebox
 
 object ORM {
 
-  sealed trait Token
+    // camel case mapping support such as userId -> user_id, postURL -> post_url
+    case class Token(name: String) {
+        // val method: Option[java.lang.reflect.Method] = defaultName.map ( companion.getClass.getMethod(_) )
+        val underscoreName: String = {
+            val sb = new StringBuilder
+            var i = 0
+            var lastChar: Char = 0
+            while (i < name.length) {
+                val ch = name.charAt(i)
+                if (i == 0) sb.append(ch)
+                else {
+                    if (Character.isLowerCase(lastChar) && Character.isUpperCase(ch)) {
+                        sb.append('_')
+                        sb.append(ch.toLower)
+                    }
+                    else sb.append(ch)
+                }
+                lastChar = ch
+                i += 1
+            }
+            sb.toString
+        }
 
-  object Token {
-    val INSERT_BASE_SQL = sql"""INSERT INTO """
-  }
-
-  case class StringToken(string: String) extends Token {
-    override def toString = string
-  }
-
-
-  /**
-    * 把任何 CaseClass 转换为 Map
-    */
-  trait Insert[C] {
-
-    def from(c: C): (String, Seq[JdbcValue[_]]) = {
-      val (schema, names, args) = build(c)
-      val name = names.mkString(",")
-      val interrogation = names.indices.map(_ ⇒ "?").mkString(",")
-      val sql = s"INSERT INTO $schema ($name) VALUES ( $interrogation )"
-
-      (sql, args)
     }
 
-    def build(c: C): (String, List[String], Seq[JdbcValue[_]])
-  }
+    /**
+      * 把任何 CaseClass 转换为 Map
+      */
+    trait Insert[C] {
 
-  object Insert {
+        def from(c: C, schemaName: Option[String]): (String, Seq[JdbcValue[_]]) = {
+            val (schema, tokenNames, args) = build(c)
+            val useSchema = schemaName match {
+                case Some(value) if value != null ⇒ value
+                case None ⇒ schema
+            }
+            val sqlFields = tokenNames.map(_.underscoreName).mkString(",")
+            val interrogation = tokenNames.indices.map(_ ⇒ "?").mkString(",")
+            val sql = s"INSERT INTO $useSchema ($sqlFields) VALUES ( $interrogation )"
 
-    implicit def materialize[C]: Insert[C] = macro converterToMapMacro[C]
+            (sql, args)
+        }
 
-    def converterToMapMacro[C: c.WeakTypeTag](c: whitebox.Context): c.Tree = {
-      import c.universe._
-
-      val tpe = weakTypeOf[C]
-
-      val fields = tpe.decls.collectFirst {
-        case m: MethodSymbol if m.isPrimaryConstructor => m
-      }.get.paramLists.head
-
-      val (names, jdbcValues) = fields.map { field =>
-        val name = field.name.toTermName
-        val decoded = name.decodedName.toString.toLowerCase()
-
-        val value = q"JdbcValue.wrap(t.$name)"
-        (q"$decoded", value)
-      }.unzip
-
-      val schemaName = TermName(tpe.typeSymbol.name.toString).toString
-
-      val tree =
-        q"""
-         new Insert[$tpe] {
-          def build(t: $tpe) = ($schemaName,$names,$jdbcValues)
-         }
-        """
-      //      println(tree)
-      tree
+        def build(c: C): (String, List[Token], Seq[JdbcValue[_]])
     }
-  }
 
+    object Insert {
+
+        def converterToMapMacro[C: c.WeakTypeTag](c: whitebox.Context): c.Tree = {
+            import c.universe._
+
+            val tpe = weakTypeOf[C]
+
+            val fields = tpe.decls.collectFirst {
+                case m: MethodSymbol if m.isPrimaryConstructor => m
+            }.get.paramLists.head
+
+            val (names, jdbcValues) = fields.map { field =>
+                val name = field.name.toTermName
+                val decoded = name.decodedName.toString
+
+                val value = q"JdbcValue.wrap(t.$name)"
+                (q"Token($decoded)", value)
+            }.unzip
+
+            val schemaName = TermName(tpe.typeSymbol.name.toString).toString.toLowerCase()
+
+            val tree =
+                q"""
+                     new Insert[$tpe] {
+                        def build(t: $tpe) = ($schemaName,$names,$jdbcValues)
+                     }
+            """
+            println(tree)
+            tree
+        }
+    }
 
 }
 

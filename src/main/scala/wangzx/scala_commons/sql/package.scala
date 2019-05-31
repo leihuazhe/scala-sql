@@ -406,4 +406,6 @@ package object sql {
 
   }
 
+  implicit def materialize[C]: Insert[C] = macro converterToMapMacro[C]
+
 }
